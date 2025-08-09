@@ -1,0 +1,23 @@
+{
+    "Vmin": -100,
+    "Vmax": 200,
+    "step": 1.0,
+    "plots": [
+        {
+            "name": "Na⁺",
+            "temp": 20,
+            "conc_in": 0.050,
+            "conc_out": 0.140,
+            "permeability": 100,
+            "valence": 1
+        },
+        {
+            "name": "Ca⁺²",
+            "temp": 20,
+            "conc_in": 0.0000001,
+            "conc_out": 0.010,
+            "permeability": 1,
+            "valence": 2
+        }
+    ]
+}
