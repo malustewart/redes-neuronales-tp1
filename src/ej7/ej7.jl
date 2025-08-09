@@ -1,6 +1,7 @@
 using Plots
 using JSON
 using ArgParse
+using DifferentialEquations
 
 default_a = 0.7
 default_b = 0.8
@@ -61,17 +62,9 @@ end
 
 f(V, a) = V*(a-V)*(V-1)
 
-function fhn(tk, yk, params)
-    [(f(yk[1], params.a)) + params.I - yk[2], params.gamma * yk[2] + params.b*yk[1]]./[params.tau, params.tauw]
-end
-
-function rk4(yk, tk, h, f, params)
-    q1 = f(tk,       yk,          params)
-    q2 = f(tk + h/2, yk + h/2*q1, params)
-    q3 = f(tk + h/2, yk + h/2*q2, params)
-    q4 = f(tk + h,   yk + h*q3,   params)
-
-    yk + h * (q1 + 2*q2 +  2*q3 + q4) / 6
+function fhn(dyk, yk, params, tk)
+    dyk[1] = ((f(yk[1], params.a)) + params.I - yk[2]) / params.tau
+    dyk[2] = (params.gamma * yk[2] + params.b*yk[1]) / params.tauw
 end
 
 args = parse_commandline()
@@ -80,10 +73,8 @@ fig_path = args["figpath"]
 
 config = read_config(config_path)
 tmax = get(config, "tmax", default_tmax)
-s = get(config, "step", default_step)
-len = convert(Int, round(tmax/s))
 
-t = range(0, tmax, length=len)
+tspan = (0, tmax)
 
 plt = plot(layout=(1,2))
 
@@ -100,15 +91,13 @@ for (i, plot_cfg) in enumerate(config["plots"])
     
     params = Params(a, b, gamma, I, tau, tauw, V0, w0)
 
-    Y = zeros(Float64, len + 1, 2)
-    Y[1,:] = [V0,w0]
-    
-    for (k, tk) in enumerate(t)
-      Y[k+1, :] =  rk4(Y[k, :], tk, s, fhn, params)
-    end
-    
-    plot!(Y[1:len,1], Y[1:len,2], layout=(1,2), subplot=1, xlabel="V", ylabel="w")
-    plot!(t, [Y[1:len,1] Y[1:len, 2]], label=["V" "w"],subplot=2, xlabel="time")
+    Y0 = [V0,w0]
+
+    prob = ODEProblem(fhn, Y0, tspan, params)
+    sol = solve(prob)
+
+    plot!(sol, layout=(1,2), subplot=1, xlabel="V", ylabel="w")
+    plot!(sol, label=["V" "w"],subplot=2, xlabel="time")
 end
 gui()
 
