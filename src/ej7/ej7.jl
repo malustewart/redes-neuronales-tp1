@@ -51,6 +51,10 @@ function parse_commandline()
             help = "path to config file"
             arg_type = String
             default = "config.json"
+        "--figpath", "-f"
+            help = "path where to save the resulting image"
+            arg_type = String
+            default = "imgs/lastfig.pdf"
     end
     return parse_args(s)
 end
@@ -72,6 +76,7 @@ end
 
 args = parse_commandline()
 config_path = args["config"]
+fig_path = args["figpath"]
 
 config = read_config(config_path)
 tmax = get(config, "tmax", default_tmax)
@@ -79,6 +84,8 @@ s = get(config, "step", default_step)
 len = convert(Int, round(tmax/s))
 
 t = range(0, tmax, length=len)
+
+plt = plot(layout=(1,2))
 
 for (i, plot_cfg) in enumerate(config["plots"])
     cfg = fill_defaults(plot_cfg)
@@ -100,10 +107,11 @@ for (i, plot_cfg) in enumerate(config["plots"])
       Y[k+1, :] =  rk4(Y[k, :], tk, s, fhn, params)
     end
     
-    p = plot!(Y[1:len,1], Y[1:len,2], layout=(1,2), subplot=1, xlabel="V", ylabel="w")
-    p = plot!(t, [Y[1:len,1] Y[1:len, 2]], label=["V" "w"],subplot=2, xlabel="time")
+    plot!(Y[1:len,1], Y[1:len,2], layout=(1,2), subplot=1, xlabel="V", ylabel="w")
+    plot!(t, [Y[1:len,1] Y[1:len, 2]], label=["V" "w"],subplot=2, xlabel="time")
 end
 gui()
 
 println("Press the enter key to quit:")
 readline()
+savefig(plt, fig_path)
