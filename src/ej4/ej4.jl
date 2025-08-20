@@ -110,7 +110,7 @@ function parse_commandline()
     return parse_args(s)
 end
 
-function SolveSystem(V0, I, g, v, C, tmax)
+function solve_system(V0, I, g, v, C, tmax)
     (; m_inf, h_inf, n_inf) = MhnParameters(V0)
     Y0 = [V0, m_inf, h_inf, n_inf]
     params = ODEParams(g, v, I, C)
@@ -120,7 +120,7 @@ function SolveSystem(V0, I, g, v, C, tmax)
     solve(prob, Rosenbrock23())
 end
 
-function PlotSolution(sol, fig_path, initial_conditions)
+function plot_solution(sol, fig_path, initial_conditions)
     initial_conditions_text = join(["$(k) = $(v)" for (k, v) in pairs(initial_conditions)], ", ")
     plt = plot(
         layout=(4, 1),
@@ -158,9 +158,12 @@ for (i, plot_cfg) in enumerate(config["plots"])
     g = Conductances()
     v = InversionV()
 
-    sol = SolveSystem(V0, I, g, v, C, tmax)
+    sol = solve_system(V0, I, g, v, C, tmax)
     PlotSolution(sol, fig_path * string(i) * ".pdf", (; V0, I))
+    plot(sol.t)
 end
+
+gui()
 
 println("Press the enter key to quit:")
 readline()
