@@ -11,7 +11,8 @@ function fill_defaults(cfg::Dict{String,Any})
     return Dict(
         "V0" => get(cfg, "V0", default_V0),
         "I" => get(cfg, "I", default_I),
-        "model" => get(cfg, "model", :HH_standard)
+        "model" => get(cfg, "model", :HH_standard),
+        "k" => get(cfg, "k", default_k)
     )
 end
 
@@ -37,10 +38,10 @@ function parse_commandline()
     return parse_args(s)
 end
 
-function solve_system(HH_model, V0, I, g, v, C, tmax)
+function solve_system(HH_model, V0, I, g, v, C, k, tmax)
     (; m_inf, h_inf, n_inf) = MhnParameters(V0)
     Y0 = [V0, m_inf, h_inf, n_inf]
-    params = HHParams(g, v, I, C)
+    params = HHParams(g, v, I, C, k)
     tspan = (0, tmax)
 
     prob = ODEProblem(HH_model, Y0, tspan, params)
@@ -84,10 +85,11 @@ for (i, plot_cfg) in enumerate(config["plots"])
 
     V0 = cfg["V0"]
     I = cfg["I"]
+    k = cfg["k"]
     g = Conductances()
     v = InversionV()
 
-    sol = solve_system(HH_model, V0, I, g, v, C, tmax)
+    sol = solve_system(HH_model, V0, I, g, v, C, k, tmax)
     plot_solution(sol, fig_path * string(i) * ".pdf", (; V0, I))
 end
 

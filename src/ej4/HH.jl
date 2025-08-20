@@ -1,7 +1,8 @@
 module HH
 
-export default_I, default_V0, default_tmax, default_I_min, default_I_max, C, Conductances, InversionV, MhnParameters, HHParams, HH_models
+export default_k, default_I, default_V0, default_tmax, default_I_min, default_I_max, C, Conductances, InversionV, MhnParameters, HHParams, HH_models
 
+default_k = 1.0 # h+n = k in aprox 2
 default_V0 = -80
 default_I = 1
 default_I_min = -100
@@ -69,6 +70,7 @@ struct HHParams
     inversion_v::InversionV
     I
     C
+    k
 end
 
 function HH_standard(dyk, yk, params::HHParams, tk)
@@ -98,7 +100,18 @@ function HH_aprox_1(dyk, yk, params::HHParams, tk)
 end
 
 function HH_aprox_2(dyk, yk, params::HHParams, tk)
-    # TODO
+    V, _, _, n = yk
+    (; V_Na, V_K, V_L) = params.inversion_v
+    (; g_Na, g_K, g_L) = params.conductances
+    (; m_inf, h_inf, n_inf, m_tau, h_tau, n_tau) = MhnParameters(V)
+
+    m = m_inf
+    h = params.k - m
+
+    dyk[1] = (params.I - g_Na * m^3 * h * (V - V_Na) - g_K * n^4 * (V - V_K) - g_L * (V - V_L)) / params.C
+    dyk[2] = (m_inf - m) / m_tau    # =0
+    dyk[3] = (h_inf - h) / h_tau
+    dyk[4] = (n_inf - n) / n_tau
 end
 
 HH_models = Dict(
