@@ -5,16 +5,16 @@
     "length": 10,
     "plots": [
         {
-            "V0": -70
+            "V0": -70,
+            "model": "HH_standard"
         },
         {
-            "V0": -50
+            "V0": -70,
+            "model": "HH_aprox_1"
         },
         {
-            "V0": -20
-        },
-        {
-            "V0": 0
+            "V0": -70,
+            "model": "HH_aprox_2"
         }
     ]
 }

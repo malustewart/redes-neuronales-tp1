@@ -90,7 +90,7 @@ for (i, plot_cfg) in enumerate(config["plots"])
     v = InversionV()
 
     sol = solve_system(HH_model, V0, I, g, v, C, k, tmax)
-    plot_solution(sol, fig_path * string(i) * ".pdf", (; V0, I))
+    plot_solution(sol, fig_path * string(i) * ".pdf", (; V0, I, k))
 end
 
 gui()

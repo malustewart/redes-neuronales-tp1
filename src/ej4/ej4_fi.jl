@@ -11,7 +11,9 @@ const default_length = 100
 
 function fill_defaults(cfg::Dict{String,Any})
     return Dict(
-        "V0" => get(cfg, "V0", default_V0)
+        "V0" => get(cfg, "V0", default_V0),
+        "model" => get(cfg, "model", :HH_standard),
+        "k" => get(cfg, "k", default_k)
     )
 end
 
@@ -37,20 +39,20 @@ function parse_commandline()
     return parse_args(s)
 end
 
-function solve_system(V0, I, g, v, C, tmax)
+function solve_system(HH_model, V0, I, g, v, C, k, tmax)
     (; m_inf, h_inf, n_inf) = MhnParameters(V0)
     Y0 = [V0, m_inf, h_inf, n_inf]
-    params = HHParams(g, v, I, C)
+    params = HHParams(g, v, I, C, k)
     tspan = (0, tmax)
 
-    prob = ODEProblem(HH_standard, Y0, tspan, params)
+    prob = ODEProblem(HH_model, Y0, tspan, params)
     solve(prob, Rosenbrock23())
 end
 
 function plot_solution(I, frequencies, fig_path, initial_conditions)
     initial_conditions_text = join(["$(k) = $(v)" for (k, v) in pairs(initial_conditions)], ", ")
     plt = plot(
-        xlabel="I(mA)",
+        xlabel="I(uA)",
         ylabel="f(Hz)",
         legend=false,
         title="Initial conditions: $initial_conditions_text",
@@ -89,15 +91,18 @@ len = get(config, "I_max", default_length)
 for (i, plot_cfg) in enumerate(config["plots"])
     cfg = fill_defaults(plot_cfg)
 
+    HH_model = HH_models[Symbol(cfg["model"])]
+
     V0 = cfg["V0"]
     I = range(I_min, I_max, length = len)
+    k = cfg["k"]
     g = Conductances()
     v = InversionV()
 
-    time_solutions = map(i -> solve_system(V0, i, g, v, C, tmax), I)
+    time_solutions = map(i -> solve_system(HH_model, V0, i, g, v, C, k, tmax), I)
     frequencies = map(solution -> get_frequency(solution), time_solutions)
 
-    plot_solution(I, frequencies, fig_path * "_fi_" * string(i) * ".pdf", (; V0))
+    plot_solution(I, frequencies, fig_path * "_fi_" * string(i) * ".pdf", (; V0, k))
 end
 
 println("Press the enter key to quit:")
