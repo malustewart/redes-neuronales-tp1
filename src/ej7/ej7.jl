@@ -55,7 +55,7 @@ function parse_commandline()
         "--figpath", "-f"
             help = "path where to save the resulting image"
             arg_type = String
-            default = "imgs/lastfig.pdf"
+            default = "imgs/lastfig"
     end
     return parse_args(s)
 end
@@ -63,8 +63,8 @@ end
 f(V, a) = V*(a-V)*(V-1)
 
 function fhn(dyk, yk, params, tk)
-    dyk[1] = ((f(yk[1], params.a)) + params.I - yk[2]) / params.tau
-    dyk[2] = (params.gamma * yk[2] + params.b*yk[1]) / params.tauw
+    dyk[1] = (f(yk[1], params.a) + params.I - yk[2]) / params.tau
+    dyk[2] = (-params.gamma * yk[2] + params.b*yk[1]) / params.tauw
 end
 
 args = parse_commandline()
@@ -76,9 +76,9 @@ tmax = get(config, "tmax", default_tmax)
 
 tspan = (0, tmax)
 
-plt = plot(layout=(1,2))
-
 for (i, plot_cfg) in enumerate(config["plots"])
+    plt = plot(layout=(1,2))
+
     cfg = fill_defaults(plot_cfg)
     V0 = cfg["V0"]
     w0 = cfg["w0"]
@@ -96,11 +96,11 @@ for (i, plot_cfg) in enumerate(config["plots"])
     prob = ODEProblem(fhn, Y0, tspan, params)
     sol = solve(prob)
 
-    plot!(sol, layout=(1,2), subplot=1, xlabel="V", ylabel="w")
+    plot!(sol[1, :], sol[2,:], layout=(1,2), subplot=1, xlabel="V", ylabel="w")
     plot!(sol, label=["V" "w"],subplot=2, xlabel="time")
+    savefig(plt, fig_path * string(i) * ".pdf")
 end
 gui()
 
 println("Press the enter key to quit:")
 readline()
-savefig(plt, fig_path)
